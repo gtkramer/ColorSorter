@@ -139,10 +139,11 @@ namespace ColorSorter {
         }
 
         public class ColorWriter {
-            private string FileName;
-            private ImageFormat FileFormat;
             private static int ImageWidth = 200;
             private static int ImageHeight = 200;
+
+            private string FileName;
+            private ImageFormat FileFormat;
 
             public ColorWriter(string fileName, ImageFormat fileFormat) {
                 FileName = fileName;
