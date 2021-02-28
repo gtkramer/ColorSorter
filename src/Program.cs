@@ -4,11 +4,11 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
+using ColorSorter.ExtensionMethods;
 using CommandLine;
-using ExtensionMethods;
 
 namespace ColorSorter {
-    class Program {
+    public class Program {
         public static void Main(string[] args) {
             Parser.Default.ParseArguments<Options>(args)
             .WithParsed<Options>(RunOptions);
@@ -52,16 +52,6 @@ namespace ColorSorter {
             }
         }
 
-        public class ColorSwatch {
-            public string Name { get; }
-            public Color Color { get; }
-
-            public ColorSwatch(string name, Color color) {
-                Name = name;
-                Color = color;
-            }
-        }
-
         private static List<ColorSwatch> ReadColorSwatches(string path) {
             List<ColorSwatch> colorSwatches = new List<ColorSwatch>();
             using (StreamReader reader = new StreamReader(path)) {
@@ -72,38 +62,6 @@ namespace ColorSorter {
                 }
             }
             return colorSwatches;
-        }
-
-        public class ColorFilter {
-            public string Name { get; }
-            private int MinInclusiveHue;
-            private int MaxExclusiveHue;
-            private Func<ColorSwatch, int, int, bool> Selector;
-
-            public ColorFilter(string name, int minInclusiveHue, int maxExclusiveHue, Func<ColorSwatch, int, int, bool> selector) {
-                Name = name;
-                MinInclusiveHue = minInclusiveHue;
-                MaxExclusiveHue = maxExclusiveHue;
-                Selector = selector;
-            }
-
-            public IEnumerable<ColorSwatch> FilterColors(IEnumerable<ColorSwatch> colorSwatches) {
-                return colorSwatches.Where(x => Selector(x, MinInclusiveHue, MaxExclusiveHue));
-            }
-
-            public static bool ColorHueContiguousSelector(ColorSwatch colorSwatch, int minInclusiveHue, int maxExclusiveHue) {
-                float h = colorSwatch.Color.GetHue();
-                return h >= minInclusiveHue && h < maxExclusiveHue;
-            }
-
-            public static bool ColorHueBreakSelector(ColorSwatch colorSwatch, int minInclusiveHue, int maxExclusiveHue) {
-                float h = colorSwatch.Color.GetHue();
-                return h >= minInclusiveHue || h < maxExclusiveHue;
-            }
-
-            public override string ToString() {
-                return Name;
-            }
         }
 
         private static List<ColorFilter> GetColorFilters() {
@@ -136,31 +94,6 @@ namespace ColorSorter {
                 h >= opts.MinHue        && h <= opts.MaxHue &&
                 s >= opts.MinSaturation && s <= opts.MaxSaturation &&
                 l >= opts.MinLightness  && l <= opts.MaxLightness;
-        }
-
-        public class ColorWriter {
-            private static int ImageWidth = 200;
-            private static int ImageHeight = 200;
-
-            private string FileName;
-            private ImageFormat FileFormat;
-
-            public ColorWriter(string fileName, ImageFormat fileFormat) {
-                FileName = fileName;
-                FileFormat = fileFormat;
-            }
-
-            public void WriteColors(ColorSwatch[] colorSwatches) {
-                Bitmap image = new Bitmap(ImageWidth, ImageHeight * colorSwatches.Length);
-                for (int i = 0; i != colorSwatches.Length; i++) {
-                    for (int x = 0; x != ImageWidth; x++) {
-                        for (int y = ImageHeight * i; y != ImageHeight * (i + 1); y++) {
-                            image.SetPixel(x, y, colorSwatches[i].Color);
-                        }
-                    }
-                }
-                image.Save(FileName, FileFormat);
-            }
         }
 
         private static void PrintFilteredColors(ColorFilter colorFilter, ColorSwatch[] colorSwatches) {
